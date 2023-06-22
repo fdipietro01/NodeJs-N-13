@@ -18,12 +18,14 @@ class SessionControler {
       const user = { ...new LoginUserDto(dbUser) };
 
       const token = generateToken(user);
-      res.cookie("token", token, {
-        maxAge: 60 * 60 * 1000,
-        httpOnly: true,
-      });
+      req.logger.info(`tokenEnLogin: ${token}`);
       if (!token) res.status(400).send({ message: "Error al loguear" });
-      res.status(200).send({ message: "Logueado exitosamente", user, token });
+      res
+        .cookie("cookieTest", "texto", {
+          maxAge: 60 * 60 * 1000,
+          httpOnly: true,
+        })
+        .send({ message: "Logueado exitosamente", user, token });
     } catch (err) {
       res.status(400).send({ message: "Error al loguear" });
     }
@@ -186,12 +188,17 @@ class SessionControler {
     res.status(200).send({ message: "deslogueo exitoso" });
   }
   async current(req, res) {
-    const email = req.user.email;
-    const dbUser = await Session.getUser(email);
-    if (dbUser === null || dbUser === undefined)
-      return res.status(400).send({ message: "No existe el usuario" });
-    const user = new CurrentUserDto(dbUser);
-    res.status(200).send({ message: "Usuario actual encontrado", user });
+    try {
+      const email = req.user.email;
+      const dbUser = await Session.getUser(email);
+      if (dbUser === null || dbUser === undefined)
+        return res.status(400).send({ message: "No existe el usuario" });
+      const user = new CurrentUserDto(dbUser);
+      console.log({ user });
+      res.status(200).send({ message: "Usuario actual encontrado", user });
+    } catch (err) {
+      req.logger.error(err.message);
+    }
   }
 }
 
